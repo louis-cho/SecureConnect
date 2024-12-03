@@ -10,12 +10,13 @@ import com.secureconnect.security.SessionCryptoManager;
 import com.secureconnect.security.strategy.CryptoStrategy;
 import com.secureconnect.util.KeyUtils;
 
-public class RSACryptoStrategy implements CryptoStrategy {
-    private final SessionCryptoManager sessionManager;
-    
-    public RSACryptoStrategy() {
-        this.sessionManager = SessionCryptoManager.getInstance();
-    }
+public class RSACryptoStrategy extends AsymCryptoStrategy {
+
+    private final String PRIVATE_KEY_TYPE = "RSA_PRIVATE";
+    private final String PUBLIC_KEY_TYPE = "RSA_PUBLIC";
+    private final String ALGORITHM = "RSA";
+
+    public RSACryptoStrategy() {}
 
     @Override
     public byte[] encrypt(byte[] data, String sessionId) throws Exception {
@@ -23,12 +24,12 @@ public class RSACryptoStrategy implements CryptoStrategy {
 			return null;
 		}
 		
-    	PublicKey publicKey = getPublicKey(sessionId);
+    	PublicKey publicKey = super.getPublicKey(sessionId, PUBLIC_KEY_TYPE, ALGORITHM);
         if (publicKey == null) {
             throw new IllegalStateException("No public key available for session: " + sessionId);
         }
 
-        Cipher cipher = Cipher.getInstance("RSA");
+        Cipher cipher = Cipher.getInstance(ALGORITHM);
         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
 
         // 데이터 암호화 (예: AES 키 전송)
@@ -43,12 +44,12 @@ public class RSACryptoStrategy implements CryptoStrategy {
 			return null;
 		}
 		
-    	PrivateKey privateKey = getPrivateKey(sessionId);
+    	PrivateKey privateKey = super.getPrivateKey(sessionId, PRIVATE_KEY_TYPE, ALGORITHM);
         if (privateKey == null) {
             throw new IllegalStateException("No private key available for session: " + sessionId);
         }
 
-        Cipher cipher = Cipher.getInstance("RSA");
+        Cipher cipher = Cipher.getInstance(ALGORITHM);
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
 
         // RSA로 데이터 복호화
@@ -57,19 +58,13 @@ public class RSACryptoStrategy implements CryptoStrategy {
         return decryptedKey;
     }
 
-    // Helper: 세션에서 public key 가져오기
-    private PublicKey getPublicKey(String sessionId) throws Exception {
-        SecretKey key = sessionManager.getKey(sessionId, "RSA_PUBLIC");
-        if (key == null) return null;
-        
-        return KeyUtils.toPublicKey(key);
+    @Override
+    public PublicKey getPublicKey(String sessionId, String keyType, String algorithm) throws Exception {
+        return super.getPublicKey(sessionId, keyType, algorithm);
     }
 
-    // Helper: 세션에서 private key 가져오기
-    private PrivateKey getPrivateKey(String sessionId) throws Exception {
-        SecretKey key = sessionManager.getKey(sessionId, "RSA_PRIVATE");
-        if (key == null) return null;
-
-        return KeyUtils.toPrivateKey(key);
+    @Override
+    protected PrivateKey getPrivateKey(String sessionId, String keyType, String algorithm) throws Exception {
+        return super.getPrivateKey(sessionId, keyType, algorithm);
     }
 }

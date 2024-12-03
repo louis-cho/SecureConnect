@@ -12,13 +12,13 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 public class KeyUtils {
-    public static PublicKey toPublicKey(SecretKey secretKey) throws Exception {
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+    public static PublicKey toPublicKey(SecretKey secretKey, String algorithm) throws Exception {
+        KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
         return keyFactory.generatePublic(new X509EncodedKeySpec(secretKey.getEncoded()));
     }
 
-    public static PrivateKey toPrivateKey(SecretKey secretKey) throws Exception {
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+    public static PrivateKey toPrivateKey(SecretKey secretKey, String algorithm) throws Exception {
+        KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
         return keyFactory.generatePrivate(new PKCS8EncodedKeySpec(secretKey.getEncoded()));
     }
     

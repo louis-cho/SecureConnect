@@ -6,15 +6,10 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
-import com.secureconnect.security.SessionCryptoManager;
-import com.secureconnect.security.strategy.CryptoStrategy;
 
-public class AESCryptoStrategy implements CryptoStrategy {
+public class AESCryptoStrategy extends SymCryptoStrategy {
 
-	private final SessionCryptoManager sessionManager;
-	
 	public AESCryptoStrategy() {
-		this.sessionManager = SessionCryptoManager.getInstance();
 	}
 	
 	@Override
@@ -23,7 +18,7 @@ public class AESCryptoStrategy implements CryptoStrategy {
 			return null;
 		}
 		
-		SecretKey aesKey = sessionManager.getKey(sessionId, "AES");
+		SecretKey aesKey = sessionCryptoManager.getKey(sessionId, "AES");
         if (aesKey == null) {
             throw new IllegalStateException("No AES key available for session: " + sessionId);
         }
@@ -44,7 +39,7 @@ public class AESCryptoStrategy implements CryptoStrategy {
 			return null;
 		}
 		
-    	SecretKey aesKey = sessionManager.getKey(sessionId, "AES");
+    	SecretKey aesKey = sessionCryptoManager.getKey(sessionId, "AES");
         if (aesKey == null) {
             throw new IllegalStateException("No AES key available for session: " + sessionId);
         }

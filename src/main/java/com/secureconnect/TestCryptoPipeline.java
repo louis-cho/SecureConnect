@@ -49,7 +49,7 @@ public class TestCryptoPipeline {
             
             cryptoPipeline.addStrategy(new RSACryptoStrategy());
             cryptoPipeline.addStrategy(new AESCryptoStrategy());
-            cryptoPipeline.addStrategy(new HMACCryptoStrategy());
+            cryptoPipeline.addHashStrategy(new HMACCryptoStrategy());
             
             byte[] encrypted = cryptoPipeline.encrypt(byteData, sessionId);
             System.out.println("encrypted >> " + encrypted);
@@ -57,6 +57,13 @@ public class TestCryptoPipeline {
             byte[] decrypted = cryptoPipeline.decrypt(encrypted, sessionId);
             String result = new String(decrypted);
             System.out.println("decrypted >> " + result);
+
+            try {
+                boolean verified = cryptoPipeline.verify(sessionId, encrypted, decrypted);
+                System.out.println("verify >> " + verified);
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
