@@ -9,6 +9,10 @@ public class HashStrategy {
 
     public final SessionCryptoManager sessionCryptoManager = SessionCryptoManager.getInstance();
 
+    public byte[] process(String sessionId, byte[] data) throws NoSuchAlgorithmException, InvalidKeyException {
+        throw new NoSuchAlgorithmException("Hash Algorithm Not Supported");
+    }
+
     public boolean verify(String sessionId, byte[] data, byte[] hash) throws NoSuchAlgorithmException, InvalidKeyException {
         throw new NoSuchAlgorithmException("Hash algorithm not supported");
     }

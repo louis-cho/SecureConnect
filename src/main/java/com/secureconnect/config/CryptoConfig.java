@@ -13,65 +13,84 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class CryptoConfig {
 
-	private String encryptionMode;	// RSA, AES_HMAC, RSA_SHA, COMPLEX
-	private int shaLength;
-	private int aesKeySize;
-	private int rsaKeySize;
-	private String hmacAlgorithm;
-	private String filePath = null;
-	
+	public Symmetric symmetric;
+	public Asymmetric asymmetric;
+	public Hash hash;
+
 	private static CryptoConfig INSTANCE = new CryptoConfig();
-	
-	private CryptoConfig() {}
-	
+
 	public static CryptoConfig getInstance() {
-		return INSTANCE;	
-	}
-	
-	public String getEncryptionMode() {
-		return encryptionMode;
-	}
-	public int getAesKeySize() {
-		return aesKeySize;
+		return INSTANCE;
 	}
 
-	public void setAesKeySize(int aesKeySize) {
-		this.aesKeySize = aesKeySize;
+	private CryptoConfig() {}
+
+	public static class Symmetric {
+		public AES AES;
+		public DES DES;
+		public DES3 DES3;
+
+		public static class AES {
+			public String mode;
+			public String padding;
+			public int keyLength;
+			public String iv;
+		}
+
+		public static class DES {
+			public String mode;
+			public String padding;
+			public int keyLength;
+			public String iv;
+		}
+
+		public static class DES3 {
+			public String mode;
+			public String padding;
+			public int keyLength;
+			public String iv;
+		}
 	}
 
-	public String getFilePath() {
-		return filePath;
+	public static class Asymmetric {
+		public RSA RSA;
+		public ECC ECC;
+		public DH DH;
+
+		public static class RSA {
+			public int keyLength;
+		}
+
+		public static class ECC {
+			public String curve;
+		}
+
+		public static class DH {
+			public String group;
+		}
+
 	}
 
-	public void setFilePath(String filePath) {
-		this.filePath = filePath;
+	public static class Hash {
+		public HMAC HMAC;
+		public SHA SHA;
+		public MD MD;
+
+		public static class HMAC {
+			public String hashAlgorithm;
+			public String key;
+		}
+
+		public static class SHA {
+			public String algorithm;
+		}
+		public static class MD {
+			public String algorithm;
+		}
 	}
 
-	public void setEncryptionMode(String encryptionMode) {
-		this.encryptionMode = encryptionMode;
-	}
-	public int getShaLength() {
-		return shaLength;
-	}
-	public void setShaLength(int shaLength) {
-		this.shaLength = shaLength;
-	}
-	
-	public int getRsaKeySize() {
-		return rsaKeySize;
-	}
-	public void setRsaKeySize(int rsaKeySize) {
-		this.rsaKeySize = rsaKeySize;
-	}
-	public String getHmacAlgorithm() {
-		return hmacAlgorithm;
-	}
-	public void setHmacAlgorithm(String hmacAlgorithm) {
-		this.hmacAlgorithm = hmacAlgorithm;
-	}
-	
+
 	public void loadFromFile(String filePath) throws IOException {
-		this.filePath = filePath;
 		ObjectMapper mapper = new ObjectMapper();
 		
 		File file = new File(filePath);

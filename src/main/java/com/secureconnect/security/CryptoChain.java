@@ -49,6 +49,13 @@ public class CryptoChain {
         return false;
     }
 
+    public byte[] hash(String sessionId, byte[] data) throws Exception {
+        if(hashStrategy == null) {
+            return null;
+        }
+        return hashStrategy.process(sessionId, data);
+    }
+
 
     // 암호화
     public byte[] encrypt(byte[] data, String sessionId) throws Exception {

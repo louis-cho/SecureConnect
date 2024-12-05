@@ -22,8 +22,8 @@ public class TestCryptoPipeline {
 		
 		CryptoChain cryptoPipeline = CryptoChain.getInstance();
 		CryptoConfig.getInstance().loadFromFile("C:\\Dev\\SecureConnect\\src\\crypto_config.json");
-		System.out.println("encryption mode >> " + CryptoConfig.getInstance().getEncryptionMode());
-		System.out.println("hmac algorithm >> " + CryptoConfig.getInstance().getHmacAlgorithm());
+		System.out.println("encryption mode >> " + CryptoConfig.getInstance().asymmetric.RSA.keyLength);
+		System.out.println("hmac algorithm >> " + CryptoConfig.getInstance().symmetric.AES.keyLength);
 	
 		String data = "Hello, World!";
 		byte[] byteData = data.getBytes();
@@ -33,19 +33,19 @@ public class TestCryptoPipeline {
 			
             // 1. RSA 키 쌍 생성
             KeyPairGenerator rsaKeyGen = KeyPairGenerator.getInstance("RSA");
-            rsaKeyGen.initialize(CryptoConfig.getInstance().getRsaKeySize());
+            rsaKeyGen.initialize(CryptoConfig.getInstance().asymmetric.RSA.keyLength);
             KeyPair keyPair = rsaKeyGen.generateKeyPair();
 
             // 2. AES 키 생성
             KeyGenerator aesKeyGen = KeyGenerator.getInstance("AES");
-            aesKeyGen.init(CryptoConfig.getInstance().getAesKeySize()); // AES 키 길이 설정
+            aesKeyGen.init(CryptoConfig.getInstance().symmetric.AES.keyLength); // AES 키 길이 설정
             SecretKey aesKey = aesKeyGen.generateKey();
 
             SessionCryptoManager sessionManager = SessionCryptoManager.getInstance();
             sessionManager.storeKey(sessionId, "RSA_PUBLIC", KeyUtils.toSecretKey(keyPair.getPublic()));
             sessionManager.storeKey(sessionId, "RSA_PRIVATE", KeyUtils.toSecretKey(keyPair.getPrivate()));
             sessionManager.storeKey(sessionId, "AES", aesKey);
-            sessionManager.storeKey(sessionId, "HMAC", KeyUtils.generateHMACKey(CryptoConfig.getInstance().getHmacAlgorithm()));
+            sessionManager.storeKey(sessionId, "HMAC", KeyUtils.generateHMACKey(CryptoConfig.getInstance().hash.HMAC.hashAlgorithm));
             
             cryptoPipeline.addStrategy(new RSACryptoStrategy());
             cryptoPipeline.addStrategy(new AESCryptoStrategy());
@@ -59,7 +59,9 @@ public class TestCryptoPipeline {
             System.out.println("decrypted >> " + result);
 
             try {
-                boolean verified = cryptoPipeline.verify(sessionId, encrypted, decrypted);
+
+                byte[] hash = cryptoPipeline.hash(sessionId, encrypted);
+                boolean verified = cryptoPipeline.verify(sessionId, encrypted, hash);
                 System.out.println("verify >> " + verified);
             } catch(Exception e) {
                 e.printStackTrace();
