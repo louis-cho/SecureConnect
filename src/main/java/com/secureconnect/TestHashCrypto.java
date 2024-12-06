@@ -5,19 +5,19 @@ package com.secureconnect;
  * @author wizar
  *
  */
+
 import com.secureconnect.security.SessionCryptoManager;
+import com.secureconnect.security.strategy.asym.RSACryptoStrategy;
 import com.secureconnect.security.strategy.hash.HMACCryptoStrategy;
 import com.secureconnect.security.strategy.sym.AESCryptoStrategy;
-import com.secureconnect.security.strategy.asym.RSACryptoStrategy;
 import com.secureconnect.util.KeyUtils;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.util.Base64;
 
-public class Test {
+public class TestHashCrypto {
 	  public static void main(String[] args) {
 	        try {
 	            // 1. RSA 키 쌍 생성

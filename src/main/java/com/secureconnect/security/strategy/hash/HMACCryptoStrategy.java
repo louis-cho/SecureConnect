@@ -7,6 +7,7 @@ import java.util.Base64;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 
+import com.secureconnect.exception.HashException;
 import com.secureconnect.security.SessionCryptoManager;
 import com.secureconnect.security.strategy.CryptoStrategy;
 import com.secureconnect.security.strategy.HashStrategy;
@@ -19,7 +20,7 @@ public class HMACCryptoStrategy extends HashStrategy {
 	}
 
 	@Override
-	public boolean verify(String sessionId, byte[] data, byte[] hash) throws NoSuchAlgorithmException, InvalidKeyException {
+	public boolean verify(String sessionId, byte[] data, byte[] hash) throws NoSuchAlgorithmException, InvalidKeyException, HashException {
 		byte[] ret = process(sessionId, data);
 		if(ret == null)
 			return false;
@@ -30,14 +31,14 @@ public class HMACCryptoStrategy extends HashStrategy {
 			return false;
 	}
 
-	public byte[] process(String sessionId, byte[] data) throws NoSuchAlgorithmException, InvalidKeyException {
+	public byte[] process(String sessionId, byte[] data) throws HashException, NoSuchAlgorithmException, InvalidKeyException {
 		if(data == null) {
 			return null;
 		}
 
 		SecretKey hmacKey = sessionCryptoManager.getKey(sessionId, "HMAC");
 		if(hmacKey == null) {
-			throw new IllegalStateException("No HMAC key available for session: " + sessionId);
+			throw new HashException("No HMAC key available for session: " + sessionId);
 		}
 
 		Mac mac = Mac.getInstance("HmacSHA256");

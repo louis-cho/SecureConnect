@@ -6,6 +6,8 @@ import java.security.PublicKey;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 
+import com.secureconnect.exception.DecryptionException;
+import com.secureconnect.exception.EncryptionException;
 import com.secureconnect.security.SessionCryptoManager;
 import com.secureconnect.security.strategy.CryptoStrategy;
 import com.secureconnect.util.KeyUtils;
@@ -26,7 +28,7 @@ public class RSACryptoStrategy extends AsymCryptoStrategy {
 		
     	PublicKey publicKey = super.getPublicKey(sessionId, PUBLIC_KEY_TYPE, ALGORITHM);
         if (publicKey == null) {
-            throw new IllegalStateException("No public key available for session: " + sessionId);
+            throw new EncryptionException("No public key available for session: " + sessionId);
         }
 
         Cipher cipher = Cipher.getInstance(ALGORITHM);
@@ -46,7 +48,7 @@ public class RSACryptoStrategy extends AsymCryptoStrategy {
 		
     	PrivateKey privateKey = super.getPrivateKey(sessionId, PRIVATE_KEY_TYPE, ALGORITHM);
         if (privateKey == null) {
-            throw new IllegalStateException("No private key available for session: " + sessionId);
+            throw new DecryptionException("No private key available for session: " + sessionId);
         }
 
         Cipher cipher = Cipher.getInstance(ALGORITHM);

@@ -44,32 +44,13 @@ public class AESCryptoStrategy extends SymCryptoStrategy {
             throw new IllegalStateException("No AES key available for session: " + sessionId);
         }
 
-        byte[] iv = extractIV(data);
-        byte[] ciphertext = extractCiphertext(data);
+        byte[] iv = extractIV(data, 12);
+        byte[] ciphertext = extractCiphertext(data, 12);
 
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         GCMParameterSpec spec = new GCMParameterSpec(128, iv);
         cipher.init(Cipher.DECRYPT_MODE, aesKey, spec);
 
         return cipher.doFinal(ciphertext);
-    }
-
-    private byte[] concatenate(byte[] iv, byte[] data) {
-        byte[] combined = new byte[iv.length + data.length];
-        System.arraycopy(iv, 0, combined, 0, iv.length);
-        System.arraycopy(data, 0, combined, iv.length, data.length);
-        return combined;
-    }
-
-    private byte[] extractIV(byte[] data) {
-        byte[] iv = new byte[12];
-        System.arraycopy(data, 0, iv, 0, 12);
-        return iv;
-    }
-
-    private byte[] extractCiphertext(byte[] data) {
-        byte[] ciphertext = new byte[data.length - 12];
-        System.arraycopy(data, 12, ciphertext, 0, ciphertext.length);
-        return ciphertext;
     }
 }

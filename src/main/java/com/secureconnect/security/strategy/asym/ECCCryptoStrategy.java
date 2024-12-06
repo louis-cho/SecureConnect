@@ -1,5 +1,7 @@
 package com.secureconnect.security.strategy.asym;
 
+import com.secureconnect.exception.EncryptionException;
+
 import javax.crypto.Cipher;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -20,7 +22,7 @@ public class ECCCryptoStrategy extends AsymCryptoStrategy {
 
         PublicKey publicKey = super.getPublicKey(sessionId, PUBLIC_KEY_TYPE, ALGORITHM);
         if(publicKey == null) {
-            throw new IllegalArgumentException("No public key available for session: " +sessionId);
+            throw new EncryptionException("No public key available for session: " +sessionId);
         }
 
         Cipher cipher = Cipher.getInstance(ALGORITHM);

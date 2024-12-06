@@ -1,5 +1,8 @@
 package com.secureconnect.security.strategy.asym;
 
+import com.secureconnect.exception.DecryptionException;
+import com.secureconnect.exception.EncryptionException;
+
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
 import javax.crypto.spec.IvParameterSpec;
@@ -27,7 +30,7 @@ public class DHCryptoStrategy extends AsymCryptoStrategy {
 
         PublicKey publicKey = super.getPublicKey(sessionId, PUBLIC_KEY_TYPE, ALGORITHM);
         if (publicKey == null) {
-            throw new IllegalStateException("No public key available for session: " + sessionId);
+            throw new EncryptionException("No public key available for session: " + sessionId);
         }
 
         KeyAgreement keyAgreement = KeyAgreement.getInstance(ALGORITHM);
@@ -39,14 +42,11 @@ public class DHCryptoStrategy extends AsymCryptoStrategy {
             sharedSecret = keyAgreement.generateSecret();
         }
 
-        byte[] aesKeyBytes = Arrays.copyOf(sharedSecret, 16);
-
         SecretKeySpec secretKeySpec = new SecretKeySpec(sharedSecret, "AES");
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 
         byte[] iv = new byte[16];
         new SecureRandom().nextBytes(iv);
-        IvParameterSpec ivSpec = new IvParameterSpec(iv);
 
         cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);
 
@@ -65,15 +65,16 @@ public class DHCryptoStrategy extends AsymCryptoStrategy {
             return null;
         }
 
-        PublicKey publicKey = super.getPublicKey(sessionId, PUBLIC_KEY_TYPE, ALGORITHM);
+        PrivateKey privateKey = super.getPrivateKey(sessionId, PRIVATE_KEY_TYPE, ALGORITHM);
+        if(privateKey == null) {
+            throw new DecryptionException("No public key available for session: " + sessionId);
+        }
 
         KeyAgreement keyAgreement = KeyAgreement.getInstance("DH");
         keyAgreement.init(super.getPrivateKey(sessionId, PRIVATE_KEY_TYPE, ALGORITHM));
-        keyAgreement.doPhase(publicKey, true);
+        keyAgreement.doPhase(privateKey, true);
 
         byte[] sharedSecret = keyAgreement.generateSecret();
-
-        byte[] aesKeyBytes = Arrays.copyOf(sharedSecret, 16);
 
         SecretKeySpec secretKeySpec = new SecretKeySpec(sharedSecret, "AES");
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");

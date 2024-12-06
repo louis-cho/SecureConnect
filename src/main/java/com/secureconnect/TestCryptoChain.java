@@ -15,7 +15,7 @@ import com.secureconnect.security.strategy.hash.HMACCryptoStrategy;
 import com.secureconnect.security.strategy.asym.RSACryptoStrategy;
 import com.secureconnect.util.KeyUtils;
 
-public class TestCryptoPipeline {
+public class TestCryptoChain {
 
 	public static void main(String[] args) throws IOException {
 		

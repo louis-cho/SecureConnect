@@ -1,4 +1,21 @@
 package com.secureconnect.security.generator.sym;
 
-public class AESKeyGenerator {
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import java.security.NoSuchAlgorithmException;
+
+public class AESKeyGenerator implements SymKeyGenerator {
+
+    KeyGenerator keyGen;
+
+    @Override
+    public void init(int keyLength) throws NoSuchAlgorithmException {
+        keyGen = KeyGenerator.getInstance("AES");
+        keyGen.init(keyLength);
+    }
+
+    @Override
+    public SecretKey generateKey() {
+        return keyGen.generateKey();
+    }
 }
