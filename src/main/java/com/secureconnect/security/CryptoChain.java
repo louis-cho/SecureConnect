@@ -2,18 +2,26 @@ package com.secureconnect.security;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
+import com.secureconnect.config.CryptoConfigLoader;
 import com.secureconnect.security.strategy.CryptoStrategy;
 import com.secureconnect.security.strategy.HashStrategy;
 
 public class CryptoChain {
-    private final List<CryptoStrategy> strategies = new ArrayList<>();
+
+    private static final Logger logger = Logger.getLogger(CryptoChain.class.getName());
+
+    private List<CryptoStrategy> strategies;
     private HashStrategy hashStrategy = null;
-    private final SessionCryptoManager sessionManager;
-    private static final CryptoChain INSTANCE = new CryptoChain(SessionCryptoManager.getInstance());
-    
-    private CryptoChain(SessionCryptoManager sessionManager) {
-        this.sessionManager = sessionManager;
+    private static final CryptoChain INSTANCE = new CryptoChain();
+
+    private CryptoChain() {
+    }
+
+    public void init(List<CryptoStrategy> strategies, HashStrategy hashStrategy) {
+        this.strategies = strategies;
+        this.hashStrategy = hashStrategy;
     }
     
     public static CryptoChain getInstance() {
@@ -38,43 +46,41 @@ public class CryptoChain {
         strategies.removeIf(strategy -> strategy.getClass().equals(strategyClass));
     }
 
-    public boolean verify(String sessionId, byte[] data, byte[] hash) throws Exception {
+    public boolean verify(byte[] data, byte[] hash) throws Exception {
         if(hashStrategy == null) {
             return true;
         }
-        if(hashStrategy.verify(sessionId, data, hash)) {
+        if(hashStrategy.verify(data, hash)) {
             return true;
         }
 
         return false;
     }
 
-    public byte[] hash(String sessionId, byte[] data) throws Exception {
+    public byte[] hash(byte[] data) throws Exception {
         if(hashStrategy == null) {
             return null;
         }
-        return hashStrategy.process(sessionId, data);
+        return hashStrategy.process(data);
     }
 
 
     // 암호화
-    public byte[] encrypt(byte[] data, String sessionId) throws Exception {
+    public byte[] encrypt(byte[] data) throws Exception {
         byte[] result = data;
         for (CryptoStrategy strategy : strategies) {
-        	System.out.println("Before Encrypted >> " + result.toString());
-            result = strategy.encrypt(result, sessionId);
-        	System.out.println("After Encrypted >> " + result.toString() + "\n\n\n");
+            result = strategy.encrypt(result);
+            logger.info("After Encrypted: " + new String(result));
         }
         return result;
     }
 
     // 복호화
-    public byte[] decrypt(byte[] data, String sessionId) throws Exception {
+    public byte[] decrypt(byte[] data) throws Exception {
         byte[] result = data;
         for (int i = strategies.size() - 1; i >= 0; i--) { // 역순으로 복호화
-        	System.out.println("Before Decrypted >> " + result.toString());
-            result = strategies.get(i).decrypt(result, sessionId);
-        	System.out.println("After Decrypted >> " + result.toString());
+            result = strategies.get(i).decrypt(result);
+            logger.info("After Decrypted: " + new String(result));
         }
         return result;
     }

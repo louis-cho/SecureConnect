@@ -1,72 +1,69 @@
 package com.secureconnect.security.strategy.asym;
 
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
 import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
 
-import com.secureconnect.exception.DecryptionException;
-import com.secureconnect.exception.EncryptionException;
-import com.secureconnect.security.SessionCryptoManager;
-import com.secureconnect.security.strategy.CryptoStrategy;
-import com.secureconnect.util.KeyUtils;
+import com.secureconnect.config.CryptoConfigLoader;
+import com.secureconnect.exception.NoSuchKeyException;
 
 public class RSACryptoStrategy extends AsymCryptoStrategy {
 
-    private final String PRIVATE_KEY_TYPE = "RSA_PRIVATE";
-    private final String PUBLIC_KEY_TYPE = "RSA_PUBLIC";
-    private final String ALGORITHM = "RSA";
+    public static final String PRIVATE_KEY_TYPE = "RSA_PRIVATE";
+    public static final String PUBLIC_KEY_TYPE = "RSA_PUBLIC";
+    private final String ALGORITHM;
 
-    public RSACryptoStrategy() {}
+    public RSACryptoStrategy() {
+        ALGORITHM = CryptoConfigLoader.getConfigAsMap().get("crypto.rsa.algorithm");
+    }
 
+    /**
+     * RSA 암호화를 수행한 뒤 나온 결과를 반환한다.
+     * @param data  원문 데이터 바이트 배열
+     * @return byte[] encrypted 암호화된 바이트 배열을 반환한다.
+     * @throws Exception    암호화 과정 중 발생한 예외 상황
+     */
     @Override
-    public byte[] encrypt(byte[] data, String sessionId) throws Exception {
+    public byte[] encrypt(byte[] data) throws Exception {
 		if(data == null) {
 			return null;
 		}
 		
-    	PublicKey publicKey = super.getPublicKey(sessionId, PUBLIC_KEY_TYPE, ALGORITHM);
+    	PublicKey publicKey = super.getKeyPair().getPublic();
         if (publicKey == null) {
-            throw new EncryptionException("No public key available for session: " + sessionId);
+            throw new NoSuchKeyException("No public key available");
         }
 
-        Cipher cipher = Cipher.getInstance(ALGORITHM);
-        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-
-        // 데이터 암호화 (예: AES 키 전송)
-        byte[] encryptedKey = cipher.doFinal(data);
-
-        return encryptedKey;
+        try {
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            return cipher.doFinal(data);
+        } catch (NoSuchAlgorithmException e) {
+            throw new NoSuchAlgorithmException("No such algorithm: " + ALGORITHM);
+        }
     }
 
     @Override
-    public byte[] decrypt(byte[] data, String sessionId) throws Exception {
+    public byte[] decrypt(byte[] data) throws Exception {
 		if(data == null) {
 			return null;
 		}
 		
-    	PrivateKey privateKey = super.getPrivateKey(sessionId, PRIVATE_KEY_TYPE, ALGORITHM);
+    	PrivateKey privateKey = super.getKeyPair().getPrivate();
         if (privateKey == null) {
-            throw new DecryptionException("No private key available for session: " + sessionId);
+            throw new NoSuchKeyException("No private key available");
         }
 
         Cipher cipher = Cipher.getInstance(ALGORITHM);
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
 
-        // RSA로 데이터 복호화
-        byte[] decryptedKey = cipher.doFinal(data);
-
-        return decryptedKey;
+        return cipher.doFinal(data);
     }
 
-    @Override
-    public PublicKey getPublicKey(String sessionId, String keyType, String algorithm) throws Exception {
-        return super.getPublicKey(sessionId, keyType, algorithm);
-    }
 
-    @Override
-    protected PrivateKey getPrivateKey(String sessionId, String keyType, String algorithm) throws Exception {
-        return super.getPrivateKey(sessionId, keyType, algorithm);
-    }
+
+
 }

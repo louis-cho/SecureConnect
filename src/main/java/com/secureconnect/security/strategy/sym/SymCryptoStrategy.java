@@ -1,22 +1,21 @@
 package com.secureconnect.security.strategy.sym;
 
-import com.secureconnect.security.SessionCryptoManager;
 import com.secureconnect.security.strategy.CryptoStrategy;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 
 public class SymCryptoStrategy extends CryptoStrategy {
 
-    final SessionCryptoManager sessionCryptoManager = SessionCryptoManager.getInstance();
+
+    protected SecretKey key = null;
 
     @Override
-    public byte[] encrypt(byte[] data, String sessionId) throws Exception {
+    public byte[] encrypt(byte[] data) throws Exception {
         throw new Exception("Encrypt not Implemented");
     }
 
     @Override
-    public byte[] decrypt(byte[] data, String sessionId) throws Exception {
+    public byte[] decrypt(byte[] data) throws Exception {
         throw new Exception("Decrypt not Implemented");
     }
 
@@ -37,5 +36,13 @@ public class SymCryptoStrategy extends CryptoStrategy {
         byte[] ciphertext = new byte[data.length - srcPos];
         System.arraycopy(data, srcPos, ciphertext, 0, ciphertext.length);
         return ciphertext;
+    }
+
+    public void setKey(SecretKey key) {
+        this.key = key;
+    }
+
+    public SecretKey getKey() {
+        return key;
     }
 }

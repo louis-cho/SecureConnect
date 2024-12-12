@@ -1,5 +1,6 @@
 package com.secureconnect.security.strategy.asym;
 
+import com.secureconnect.config.CryptoConfigLoader;
 import com.secureconnect.exception.DecryptionException;
 import com.secureconnect.exception.EncryptionException;
 
@@ -7,92 +8,111 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SecureRandom;
+import java.security.*;
 import java.util.Arrays;
 
 public class DHCryptoStrategy extends AsymCryptoStrategy {
 
-    private final String PRIVATE_KEY_TYPE = "DH_PRIVATE";
-    private final String PUBLIC_KEY_TYPE = "DH_PUBLIC";
-    private final String ALGORITHM = "DH";
+    public static final String PRIVATE_KEY_TYPE = "DH_PRIVATE";
+    public static final String PUBLIC_KEY_TYPE = "DH_PUBLIC";
+    private final String ALGORITHM;
+    private final String AES_ALGORITHM;
+    private final String HASH_ALGORITHM;
+    private final int AES_KEY_SIZE;
 
     public DHCryptoStrategy() {
-
+        ALGORITHM = CryptoConfigLoader.getConfigAsMap().get("crypto.dh.algorithm"); // e.g., "DH" or "ECDH"
+        AES_ALGORITHM = CryptoConfigLoader.getConfigAsMap().get("crypto.dh.aes.algorithm"); // e.g., "AES/CBC/PKCS5Padding"
+        HASH_ALGORITHM = CryptoConfigLoader.getConfigAsMap().get("crypto.dh.hash.algorithm"); // e.g., "SHA-256"
+        AES_KEY_SIZE = Integer.parseInt(CryptoConfigLoader.getConfigAsMap().get("crypto.dh.aes.keyLength")); // e.g., 128
     }
 
     @Override
-    public byte[] encrypt(byte[] data, String sessionId) throws Exception {
-        if(data == null) {
+    public byte[] encrypt(byte[] data) throws Exception {
+        if (data == null) {
             return null;
         }
 
-        PublicKey publicKey = super.getPublicKey(sessionId, PUBLIC_KEY_TYPE, ALGORITHM);
+        // Retrieve public and private keys
+        PublicKey publicKey = super.getKeyPair().getPublic();
         if (publicKey == null) {
-            throw new EncryptionException("No public key available for session: " + sessionId);
+            throw new EncryptionException("No public key available");
         }
 
+        PrivateKey privateKey = super.getKeyPair().getPrivate();
+
+        // Perform key agreement
         KeyAgreement keyAgreement = KeyAgreement.getInstance(ALGORITHM);
-        keyAgreement.init(super.getPrivateKey(sessionId, PRIVATE_KEY_TYPE, ALGORITHM));
+        keyAgreement.init(privateKey);
         keyAgreement.doPhase(publicKey, true);
 
-        byte[] sharedSecret = sessionCryptoManager.getClientData(sessionId).getSharedSecret();
-        if(sharedSecret == null) {
-            sharedSecret = keyAgreement.generateSecret();
-        }
+        // Derive AES key from shared secret
+        byte[] sharedSecret = keyAgreement.generateSecret();
+        byte[] aesKeyBytes = deriveKey(sharedSecret); // Use dynamic hash algorithm to derive key
+        SecretKeySpec secretKeySpec = new SecretKeySpec(aesKeyBytes, "AES");
 
-        SecretKeySpec secretKeySpec = new SecretKeySpec(sharedSecret, "AES");
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-
-        byte[] iv = new byte[16];
-        new SecureRandom().nextBytes(iv);
-
-        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);
+        // AES encryption
+        Cipher cipher = Cipher.getInstance(AES_ALGORITHM);
+        byte[] iv = new byte[16]; // IV size is 16 bytes for AES
+        new SecureRandom().nextBytes(iv); // Generate random IV
+        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, new IvParameterSpec(iv));
 
         byte[] encryptedData = cipher.doFinal(data);
 
-        byte[] result = Arrays.copyOf(encryptedData, encryptedData.length + iv.length);
-        System.arraycopy(iv, 0, result, encryptedData.length, iv.length);
-        System.arraycopy(iv, 0, result, encryptedData.length + iv.length, iv.length);
+        // Combine IV and encrypted data
+        byte[] result = new byte[iv.length + encryptedData.length];
+        System.arraycopy(iv, 0, result, 0, iv.length);
+        System.arraycopy(encryptedData, 0, result, iv.length, encryptedData.length);
 
         return result;
     }
 
     @Override
-    public byte[] decrypt(byte[] data, String sessionId) throws Exception {
-        if(data == null) {
+    public byte[] decrypt(byte[] data) throws Exception {
+        if (data == null) {
             return null;
         }
 
-        PrivateKey privateKey = super.getPrivateKey(sessionId, PRIVATE_KEY_TYPE, ALGORITHM);
-        if(privateKey == null) {
-            throw new DecryptionException("No public key available for session: " + sessionId);
+        // Retrieve public and private keys
+        PrivateKey privateKey = super.getKeyPair().getPrivate();
+        PublicKey publicKey = super.getKeyPair().getPublic();
+
+        if (privateKey == null || publicKey == null) {
+            throw new DecryptionException("No private or public key available");
         }
 
-        KeyAgreement keyAgreement = KeyAgreement.getInstance("DH");
-        keyAgreement.init(super.getPrivateKey(sessionId, PRIVATE_KEY_TYPE, ALGORITHM));
-        keyAgreement.doPhase(privateKey, true);
+        // Perform key agreement
+        KeyAgreement keyAgreement = KeyAgreement.getInstance(ALGORITHM);
+        keyAgreement.init(privateKey);
+        keyAgreement.doPhase(publicKey, true);
 
+        // Derive AES key from shared secret
         byte[] sharedSecret = keyAgreement.generateSecret();
+        byte[] aesKeyBytes = deriveKey(sharedSecret);
+        SecretKeySpec secretKeySpec = new SecretKeySpec(aesKeyBytes, "AES");
 
-        SecretKeySpec secretKeySpec = new SecretKeySpec(sharedSecret, "AES");
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        // Split IV and encrypted data
+        byte[] iv = Arrays.copyOfRange(data, 0, 16); // First 16 bytes are IV
+        byte[] encryptedData = Arrays.copyOfRange(data, 16, data.length);
 
-        byte[] iv = Arrays.copyOfRange(data, 0,16);
-        IvParameterSpec ivSpec = new IvParameterSpec(iv);
-        byte[] encryptedData = Arrays.copyOfRange(data, 16,data.length);
-        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivSpec);
+        // AES decryption
+        Cipher cipher = Cipher.getInstance(AES_ALGORITHM);
+        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, new IvParameterSpec(iv));
+
         return cipher.doFinal(encryptedData);
     }
 
-    @Override
-    protected PrivateKey getPrivateKey(String sessionId, String keyType, String algorithm) throws Exception {
-        return super.getPrivateKey(sessionId, keyType, algorithm);
+    /**
+     * Derive an AES key from the shared secret using a dynamic hash algorithm.
+     */
+    private byte[] deriveKey(byte[] sharedSecret) throws Exception {
+        MessageDigest messageDigest = MessageDigest.getInstance(HASH_ALGORITHM);
+        byte[] hashedSecret = messageDigest.digest(sharedSecret);
+        return Arrays.copyOf(hashedSecret, AES_KEY_SIZE / 8); // Trim to AES key size (e.g., 128 bits)
     }
 
     @Override
-    public PublicKey getPublicKey(String sessionId, String keyType, String algorithm) throws Exception {
-        return super.getPublicKey(sessionId, keyType, algorithm);
+    public void setKeyPair(KeyPair keyPair) throws Exception {
+        super.setKeyPair(keyPair);
     }
 }

@@ -5,7 +5,13 @@ package com.secureconnect.security.strategy;
  */
 public abstract class CryptoStrategy {
 
-	public abstract byte[] encrypt(byte[] data, String sessionId) throws Exception;
+	private final String algorithm = null;
 
-	public abstract byte[] decrypt(byte[] data, String sessionId) throws Exception;
+	public String getAlgorithm() {
+		return algorithm;
+	}
+
+	public abstract byte[] encrypt(byte[] data) throws Exception;
+
+	public abstract byte[] decrypt(byte[] data) throws Exception;
 }

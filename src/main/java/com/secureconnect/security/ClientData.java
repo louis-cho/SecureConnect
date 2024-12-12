@@ -1,10 +1,10 @@
 package com.secureconnect.security;
 
-import javax.crypto.SecretKey;
+import java.security.Key;
 import java.util.HashMap;
 
 public class ClientData {
-    private HashMap<String, SecretKey> keyStore = null;
+    private HashMap<String, Key> keyStore = null;
     private Long sessionExpiry = null;
     private byte[] sharedSecret = null;
 
@@ -13,11 +13,11 @@ public class ClientData {
         sessionExpiry = System.currentTimeMillis();
     }
 
-    public HashMap<String, SecretKey> getKeyStore() {
+    public HashMap<String, Key> getKeyStore() {
         return keyStore;
     }
 
-    public void setKeyStore(HashMap<String, SecretKey> keyStore) {
+    public void setKeyStore(HashMap<String, Key> keyStore) {
         this.keyStore = keyStore;
     }
 

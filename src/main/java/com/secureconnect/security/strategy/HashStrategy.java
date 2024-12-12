@@ -1,20 +1,29 @@
 package com.secureconnect.security.strategy;
 
 import com.secureconnect.exception.HashException;
-import com.secureconnect.security.SessionCryptoManager;
 
+import javax.crypto.SecretKey;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 public class HashStrategy {
 
-    public final SessionCryptoManager sessionCryptoManager = SessionCryptoManager.getInstance();
+    protected SecretKey key = null;
 
-    public byte[] process(String sessionId, byte[] data) throws NoSuchAlgorithmException, InvalidKeyException, HashException {
+
+    public byte[] process(byte[] data) throws NoSuchAlgorithmException, InvalidKeyException, HashException {
         throw new NoSuchAlgorithmException("Hash Algorithm Not Supported");
     }
 
-    public boolean verify(String sessionId, byte[] data, byte[] hash) throws NoSuchAlgorithmException, InvalidKeyException, HashException {
+    public boolean verify(byte[] data, byte[] hash) throws NoSuchAlgorithmException, InvalidKeyException, HashException {
         throw new NoSuchAlgorithmException("Hash algorithm not supported");
+    }
+
+    public void setKey(SecretKey key) {
+        this.key = key;
+    }
+
+    public SecretKey getKey() {
+        return key;
     }
 }
