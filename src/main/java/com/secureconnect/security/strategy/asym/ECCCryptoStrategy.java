@@ -10,16 +10,20 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.*;
 import java.util.Base64;
 
+/**
+ * Elliptic Curve Cryptograph 암호화 클래스
+ */
 public class ECCCryptoStrategy extends AsymCryptoStrategy {
 
-    public static final String PUBLIC_KEY_TYPE = "ECC_PUBLIC";
-    public static final String PRIVATE_KEY_TYPE = "ECC_PRIVATE";
     private final String ALGORITHM;
     private final String AES_ALGORITHM;
     private final int AES_KEY_SIZE;
 
     private final boolean useECDH; // ECDH 또는 ECDSA 모드를 지정
 
+    /**
+     * properties로 부터 설정값을 읽어온다
+     */
     public ECCCryptoStrategy() {
 
         ALGORITHM = CryptoConfigLoader.getConfigAsMap().get("crypto.ecc.algorithm");
@@ -33,6 +37,12 @@ public class ECCCryptoStrategy extends AsymCryptoStrategy {
         }
     }
 
+    /**
+     * 데이터 암호화
+     * @param data          암호화할 데이터
+     * @return              암호화된 바이트 배열
+     * @throws Exception    암호화 도중 발생한 예외
+     */
     @Override
     public byte[] encrypt(byte[] data) throws Exception {
         if (!useECDH) {
@@ -41,6 +51,12 @@ public class ECCCryptoStrategy extends AsymCryptoStrategy {
         return performECDHEncryption(data);
     }
 
+    /**
+     * 데이터 복호화
+     * @param data          복호화할 데이터
+     * @return              복호화된 바이트 배열
+     * @throws Exception    복호화 도중 발생한 예외
+     */
     @Override
     public byte[] decrypt(byte[] data) throws Exception {
         if (!useECDH) {
@@ -49,6 +65,12 @@ public class ECCCryptoStrategy extends AsymCryptoStrategy {
         return performECDHDecryption(data);
     }
 
+    /**
+     * ECC 서명하기
+     * @param data          서명할 데이터
+     * @return              서명 결과
+     * @throws Exception    서명 도중 발생한 예외
+     */
     public byte[] signData(byte[] data) throws Exception {
         if (useECDH) {
             throw new UnsupportedOperationException("ECDSA signing is not available in ECDH mode.");
@@ -56,6 +78,13 @@ public class ECCCryptoStrategy extends AsymCryptoStrategy {
         return performECDSASigning(data);
     }
 
+    /**
+     * ECC 서명 대조하기
+     * @param data              서명할 데이터
+     * @param signatureBytes    서명 정보
+     * @return                  서명 일치 여부
+     * @throws Exception        서명 도중 발생한 예외
+     */
     public boolean verifySignature(byte[] data, byte[] signatureBytes) throws Exception {
         if (useECDH) {
             throw new UnsupportedOperationException("ECDSA verification is not available in ECDH mode.");
@@ -63,10 +92,12 @@ public class ECCCryptoStrategy extends AsymCryptoStrategy {
         return performECDSAVerification(data, signatureBytes);
     }
 
-    // ============================
-    // ECDH 암호화/복호화
-    // ============================
-
+    /**
+     * ECDH 암호화
+     * @param data          암호화할 데이터
+     * @return              암호화된 바이트 배열
+     * @throws Exception    암호화 도중 발생한 예외
+     */
     private byte[] performECDHEncryption(byte[] data) throws Exception {
         if (data == null) {
             return null;
@@ -98,6 +129,12 @@ public class ECCCryptoStrategy extends AsymCryptoStrategy {
         }
     }
 
+    /**
+     * ECDH 복호화
+     * @param data          복호화할 데이터
+     * @return              복호화된 바이트 배열
+     * @throws Exception    복호화 도중 발생한 예외
+     */
     private byte[] performECDHDecryption(byte[] data) throws Exception {
         if (data == null) {
             return null;
@@ -129,10 +166,12 @@ public class ECCCryptoStrategy extends AsymCryptoStrategy {
         }
     }
 
-    // ============================
-    // ECDSA 서명/검증
-    // ============================
-
+    /**
+     * ECDSA 서명
+     * @param data          서명할 데이터
+     * @return              서명 결과
+     * @throws Exception    서명 도중 발생한 예외
+     */
     private byte[] performECDSASigning(byte[] data) throws Exception {
         PrivateKey privateKey = super.getKeyPair().getPrivate();
         if (privateKey == null) {
@@ -150,6 +189,13 @@ public class ECCCryptoStrategy extends AsymCryptoStrategy {
         }
     }
 
+    /**
+     * ECDSA 검증
+     * @param data              검증할 데이터
+     * @param signatureBytes    서명 데이터
+     * @return                  검증 결과
+     * @throws Exception        검증 도중 발생한 예외
+     */
     private boolean performECDSAVerification(byte[] data, byte[] signatureBytes) throws Exception {
         PublicKey publicKey = super.getKeyPair().getPublic();
         if (publicKey == null) {

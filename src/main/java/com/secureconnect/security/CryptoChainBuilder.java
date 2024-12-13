@@ -28,11 +28,24 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * CryptoChain을 구성하기 위한 빌더 클래스
+ * 암호화 및 해시 전략을 생성 및 설정합니다.
+ */
 public class CryptoChainBuilder {
 
+    // 암호화 전략 리스트
     private List<CryptoStrategy> strategies = new ArrayList<>();
+
+    // 해시 처리 전략
     private HashStrategy hashStrategy = null;
 
+    /**
+     * 설정 파일의 순서에 따라 암호화 파이프라인을 생성합니다.
+     *
+     * @return 생성된 암호화 전략 리스트
+     * @throws Exception 암호화 전략 생성 중 발생한 예외
+     */
     public List<CryptoStrategy> buildPipeline() throws Exception {
         String sequence = CryptoConfigLoader.getConfigAsMap().get("crypto.sequence");
         if (sequence == null || sequence.isEmpty()) {
@@ -47,6 +60,12 @@ public class CryptoChainBuilder {
         return strategies;
     }
 
+    /**
+     * 설정 파일의 정보에 따라 해시 처리 전략을 생성합니다.
+     *
+     * @return 생성된 해시 처리 전략
+     * @throws NoSuchAlgorithmException 지원되지 않는 해시 알고리즘일 경우 발생
+     */
     public HashStrategy buildHashStrategy() throws NoSuchAlgorithmException {
         String hash = CryptoConfigLoader.getConfigAsMap().get("crypto.hash");
 
@@ -88,6 +107,13 @@ public class CryptoChainBuilder {
         throw new IllegalArgumentException("No valid hash strategy provided in configuration.");
     }
 
+    /**
+     * 주어진 단계 이름에 따라 암호화 전략을 생성합니다.
+     *
+     * @param step 암호화 전략 이름
+     * @return 생성된 암호화 전략
+     * @throws Exception 암호화 전략 생성 중 발생한 예외
+     */
     private CryptoStrategy createStrategy(String step) throws Exception {
         switch (step) {
             case "rsa": {

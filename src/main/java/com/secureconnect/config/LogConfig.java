@@ -2,7 +2,6 @@ package com.secureconnect.config;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -28,16 +27,5 @@ public class LogConfig {
         public String logPath;
         public boolean fileLog;
         public boolean consoleLog;
-    }
-
-
-    public void loadFromFile(String filePath) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-
-        File file = new File(filePath);
-
-        if(file.exists() && file.isFile()) {
-            INSTANCE = mapper.readValue(file, LogConfig.class);
-        }
     }
 }

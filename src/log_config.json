@@ -1,8 +1,0 @@
-{
-  "Log": {
-    "logLevel": "ALL",
-    "logPath": "./crypto_logs.log",
-    "fileLog": true,
-    "consoleLog": true
-  }
-}
